@@ -22,7 +22,7 @@ Installation
 Usage
 ----
   
-    python3 Icrawl -w https://example.com -A -v -c 10 -o output.txt  
+    python3 Icrawl -w <url> -A -v -c 10 -o output.txt  
 
 # Note
 To perform an IP Address geolocation look up an API key is required
