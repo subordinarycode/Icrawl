@@ -1,5 +1,5 @@
 # Discription
-Icrawl is a web scrapper/spider that used regex to look for spercific strings in the HTML of the website
+Icrawl is a web scrapper/spider that uses regex to look for spercific strings in the HTML of the website
 
 
 # Searches 
