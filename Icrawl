@@ -189,7 +189,7 @@ def parse_args():
 	parser.add_argument("-o", "--output",  metavar="",type=str, default="",   help="Save output to a file",  dest="output")
 	parser.add_argument("-p", "--phone",   action="store_true",  help="Search for phone numbers",            dest="phone")
 	parser.add_argument("-s", "--secrets", action="store_true",  help="Search for API keys, Hashes, Access tokens and Authentication tokens", dest="secrets")
-	parser.add_argument('-u', '--url', metavar="",required=True, type=str,    help="Url to start scraping/spidering", dest="input_url")
+	parser.add_argument('-u', '--url',required=True, type=str,    help="Url to start scraping/spidering", dest="input_url")
 	parser.add_argument("-v", "--verbose",     action="store_true",           help="Verbose output",          dest="verbose")
 	args = parser.parse_args()
 
