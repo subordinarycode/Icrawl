@@ -1,0 +1,392 @@
+#! /bin/env python3
+
+# Standard libary
+from os import system
+from sys import platform
+from collections import deque
+from socket import gethostbyname
+from urllib.parse import urlsplit
+
+# Third party libarys
+import pandas
+import argparse
+from colorama import Fore
+
+# Colors
+green = Fore.GREEN
+blue = Fore.BLUE
+yellow = Fore.YELLOW
+red = Fore.RED
+norm = Fore.RESET
+cyan = Fore.CYAN
+
+# Boxes
+fbox = f"{green}[+]{norm}"
+box = f"[+]"
+ibox = f"{yellow}[+]{norm}"
+error = f"{red}[!]{norm}"
+
+# Importing classes
+try:
+	from modules.Regex import Regex
+except:
+	print(f"{error} There was an error importing the module ({yellow}Regex{norm})\n{ibox} Make sure Icrawl is in the same directory as the ({yellow}modules{norm}) directory.")
+	exit(1)
+
+try:
+	from modules.HTMLPARSE import Parser
+except:
+	print(f"{error} There was an error importing the module ({yellow}HTMLPARSE{norm})\n{ibox} Make sure Icrawl is in the same directory as the ({yellow}modules{norm}) directory.")
+	exit(1)
+
+try:
+	from modules.LookUp import Lookup
+except:
+	print(f"{error} There was an error importing the module ({yellow}LookUp{norm})\n{ibox} Make sure Icrawl is in the same directory as the ({yellow}modules{norm}) directory.")
+	exit(1)
+
+
+
+
+# Sets of found interesting data
+emails = set()
+phone_numbers = set()
+addresses = set()
+api_keys = set()
+access_tokens = set()
+auth_tokens = set()
+Hashes = set()
+scraped_url = set()
+
+
+# Dictionary of urls and dataframes
+dframes = {}
+
+# Use the address, email and phone numbers found to make into a dataframe for nicer printing
+def make_dataframe(host, address, email, phone, api, access, auth):
+    global dframes
+    df = pandas.DataFrame()
+    
+	# Emails
+    try:
+        elist = list(email)
+        if len(elist) != 0:
+            df["Emails"] = pandas.Series(list(emails))
+    except ValueError:
+        pass
+	
+	# Phone numbers
+    try:
+        elist = list(phone)
+        if len(elist) != 0:
+            df["Phone Numbers"] = pandas.Series(list(phone))
+    except:
+        pass
+
+	# Addresses
+    try:
+        elist = list(address)
+        if len(elist) != 0:
+            df["Possable Addresses"] = pandas.Series(list(address))
+    except ValueError:
+        pass
+
+	# auth tokens
+    try:
+        elist = list(auth)
+        if len(elist) != 0: 
+            df["Possible Auth Tokens"] = pandas.Series(list(auth))
+    except ValueError:
+        pass
+	
+	# Api keys
+    try:
+        elist = list(api)
+        if len(elist) != 0: 
+            df["Possible Api Keys"] = pandas.Series(list(api))
+    except ValueError:
+        pass
+	
+	# Access tokens
+    try:
+        elist = list(access)
+        if len(elist) != 0: 
+            df["Possible Access Tokens"] = pandas.Series(list(access))
+    except ValueError:
+        pass
+    
+
+    if len(df) > 0:
+        df = df.fillna("")
+        dframes[host] = df
+
+# Print key value pairs of dframes    dframes=(url : dataframe)
+def resaults():
+	# Clearing the screen before printing resaults
+	if platform == "win32":
+		system("cls")
+	else:
+		system("clear")
+	
+	# Print urls and dataframes containing information scraped from that url
+	if len(dframes) == 0:
+		print(f"{error} No resaults found")
+		if args.output != "":
+			with open(args.output, "a") as f:
+				f.write(f"{error} No resaults found\n")
+	else:
+		for i in dframes:
+			print(f"{blue}{i}{norm}")
+			print(dframes[i])
+			if args.output != "":
+				with open(args.output, "a") as f:
+					f.write(f"{blue}{i}{norm}\n")
+					f.write(f"{dframes[i]}\n\n")
+
+	# Print resaults from whois lookup
+	if len(domain_infomation) > 0:
+		for i in domain_infomation:
+			print(i)
+			if args.output != "":
+				with open(args.output, "a") as f:
+					f.write(i + "\n")
+	
+	# Print resaults from ip geolocation
+	if len(ip_info) > 0:
+		for key, value in ip_info:
+			print(f"{green}[+] {cyan}{key}{norm}: {value}")
+			if args.output != "":
+				with open(args.output, "a") as f:
+					f.write(f"{green}[+] {cyan}{key}{norm}: {value}\n")
+	
+	# Take user input and print all scraped urls
+	if args.verbose:
+		answer = input(f"[+] Do you want to show all {len(scraped_url)} crawled urls?(Y/N): ")
+		if answer.lower() == "y":
+			for i in scraped_url:
+				print(f"{blue}{i}{norm}")
+	
+	# Writes scraped urls to a file
+	if args.output != "":
+		with open(args.output, "a") as f:
+			f.write("\n")
+			for i in scraped_url:
+				f.write(f"{blue}{i}{norm}\n")
+
+# parsees user arguments
+def parse_args():
+
+	parser = argparse.ArgumentParser(description="An osint web scraping tool")
+	parser.add_argument("-A", "--all",     action="store_true",  help="Search for everything",               dest="all")
+	parser.add_argument("-a", "--address", action="store_true",  help="Search for street addresses (Note: returns false positives)", dest="address")
+	parser.add_argument("-ac", "--access", action="store_true",  help="Search for access tokens",            dest="access")
+	parser.add_argument("-au", "--auth",   action="store_true",  help="Search for authentication tokens",    dest="auth")	
+	parser.add_argument("-c", "--count",   metavar="" ,type=int, default=100 ,help="Maximum number of urls to scrape (Default 100)", dest="count")
+	parser.add_argument("-e", "--emails",  action="store_true",  help="Search for emails addresses",         dest="emails")
+	parser.add_argument("-H", "--hash",    action="store_true",  help="Search for password hashes",          dest="hash")
+	parser.add_argument("-k", "--key",     action="store_true",  help="Search for api keys",                 dest="api")
+	parser.add_argument("-l", "--lookup",  action="store_true",  help="Proform whois lookup and iplocation", dest="lookup")
+	parser.add_argument("-o", "--output",  metavar="",type=str, default="",   help="Save output to a file",  dest="output")
+	parser.add_argument("-p", "--phone",   action="store_true",  help="Search for phone numbers",            dest="phone")
+	parser.add_argument("-s", "--secrets", action="store_true",  help="Search for API keys, Hashes, Access tokens and Authentication tokens", dest="secrets")
+	parser.add_argument('-u', '--url', metavar="",required=True, type=str,    help="Url to start scraping/spidering", dest="input_url")
+	parser.add_argument("-v", "--verbose",     action="store_true",           help="Verbose output",          dest="verbose")
+	args = parser.parse_args()
+
+	return args
+
+# Parses throught given html using regex and looks for string matches
+def search_html(html_content):
+
+	if args.emails:
+		found_emails = Regex.email(html_content)
+		for i in found_emails:
+			print(f"{fbox} Possible email address found {i}")
+			emails.add(i)
+
+	if args.secrets:
+		found_api = Regex.api_keys(html_content)
+		found_auth_token = Regex.auth_token(html_content)
+		found_access_token = Regex.acces_tokens(html_content)
+		found_hash = Regex.hashes(html_content)
+		
+		for i in found_hash:
+			print(f"{fbox} Possible authentication token found {i}")
+			Hashes.add(i)
+
+		for i in found_api:
+			print(f"{fbox} Possible api key found {i}")
+			api_keys.add(i)
+		
+		for i in found_auth_token:
+			print(f"{fbox} Possible authentication token found {i}")
+			auth_tokens.add(i)
+		
+		for i in found_access_token:
+			print(f"{fbox} Possible access token found {i}")
+			access_tokens.add(i)
+
+	if args.phone:
+		found_phone_numbers = Regex.phone_number(html_content)
+		for i in found_phone_numbers:
+			print(f"{fbox} Possible phone number found {i}")
+			phone_numbers.add(i)
+	
+	if args.address:
+		found_addresses = Regex.addresses(html_content)
+		for i in found_addresses:
+			print(f"{fbox} Possible street address found {i}")
+			addresses.add(i)
+	
+	if args.api:
+		found_api = Regex.api_keys(html_content)
+		for i in found_addresses:
+			print(f"{fbox} Possible api key found {i}")
+			api_keys.add(i)
+	
+	if args.access:
+		found_access = Regex.acces_tokens(html_content)
+		for i in found_access:
+			print(f"{fbox} Possible access token found {i}")
+			access_tokens.add(i)
+	
+	if args.auth:
+		found_auth = Regex.auth_token(html_content)
+		for i in found_auth:
+			print(f"{fbox} Possible authentication token found {i}")
+			auth_tokens.add(i)
+	
+	if args.hash:
+		found_hash = Regex.hashes(html_content)
+		for i in found_hash:
+			print(f"{fbox} Possible authentication token found {i}")
+			Hashes.add(i)
+	
+	if args.all:
+		found_addresses = Regex.addresses(html_content)
+		for i in found_addresses:
+			print(f"{fbox} Possible street address found {i}")
+			addresses.add(i)
+
+		found_phone_numbers = Regex.phone_number(html_content)
+		for i in found_phone_numbers:
+			print(f"{fbox} Possible phone number found {i}")
+			phone_numbers.add(i)
+		
+		found_hash = Regex.hashes(html_content)
+		for i in found_hash:
+			print(f"{fbox} Possible authentication token found {i}")
+			Hashes.add(i)
+
+		found_api = Regex.api_keys(html_content)
+		for i in found_api:
+			print(f"{fbox} Possible api key found {i}")
+			api_keys.add(i)
+
+		found_auth_token = Regex.auth_token(html_content)
+		for i in found_auth_token:
+			print(f"{fbox} Possible authentication token found {i}")
+			auth_tokens.add(i)
+
+		found_access_token = Regex.acces_tokens(html_content)
+		for i in found_access_token:
+			print(f"{fbox} Possible access token found {i}")
+			access_tokens.add(i)
+
+		found_emails = Regex.email(html_content)
+		for i in found_emails:
+			print(f"{fbox} Possible email address found {i}")
+			emails.add(i)
+
+
+def main():
+	global domain_infomation, ip_info
+
+	print(f"{box} Starting crawler")
+	print(f"{box} Press CTRL-C to stop the crawler")
+
+	# Breaking up the given url into 3 parts scheme=https:// netloc=domainName path=subDirectorys
+	unscraped_url = deque([args.input_url])
+	parts = urlsplit(args.input_url)
+	base_url = f"{parts.scheme}://{parts.netloc}"
+
+	# Proform whois lookup and ip geolocation
+	if args.lookup or args.all:
+		if args.verbose:
+			print(f"{ibox} Running whois lookup")
+		domain_infomation = Lookup.domain_infomation(base_url)
+		url = base_url.split(".")
+		url = f"{url[1]}.{url[2]}"
+		if args.verbose:
+			print(f"{ibox} Running IP geolocation lookup")
+		domain_ip = gethostbyname(url)
+		ip_info = Lookup.ip_lookup(domain_ip)
+	else:
+		domain_infomation = []
+		ip_info = {}
+
+	try:
+		# Run the loop until all urls are scraped or until max count is reached
+		while len(unscraped_url) and len(scraped_url) <= args.count -1:
+			# Grabbing new url from the list
+			URL = unscraped_url.popleft()
+	
+			scraped_url.add(URL)
+
+			# Breaking the url into 3 parts and forming new url path
+			parts = urlsplit(URL)
+			
+			
+			if args.verbose:
+				print(f"{ibox} Crawling {blue}{URL}{norm}")
+			
+			# Getting the html of the url
+			soup = Parser.get_source(URL)
+			
+			# No html was returned so continue onto the next url
+			if soup == None:
+				continue
+
+			# Formatting the html (not needed but here we are)
+			content = soup.prettify()
+			
+			search_html(content)
+
+			# Getting all the new links found in the html and adding them to the unscraped list
+			unscraped_url = Parser.get_links(content, base_url, unscraped_url, scraped_url)
+
+			# Taking found resaults and making them into  a dataframe
+			make_dataframe(URL, addresses, emails, phone_numbers, api_keys, access_tokens, auth_tokens)
+			
+			# Clearing found resaults for next iteration in the loop
+			emails.clear()
+			phone_numbers.clear()
+			addresses.clear()
+			api_keys.clear()
+			access_tokens.clear()
+			auth_tokens.clear()
+		
+	except KeyboardInterrupt:
+		if args.verbose:
+			print(f"{error} Keyboard interrupt stopping crawler")
+		
+		make_dataframe(URL, addresses, emails, phone_numbers, api_keys, access_tokens, auth_tokens)
+		resaults()
+		print()
+		print(f"{box} Goodbye")
+		exit()
+
+
+
+	make_dataframe(URL, addresses, emails, phone_numbers, api_keys, access_tokens, auth_tokens)
+	resaults()
+	print()
+	print(f"{box} Goodbye")
+	exit()
+
+
+if __name__ == "__main__":
+	args = parse_args()
+	main()
+
+
