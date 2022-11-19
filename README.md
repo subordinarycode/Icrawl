@@ -27,5 +27,17 @@ Usage
 # Note
 To perform an IP Address geolocation look up an API key is required
 
+# To Do
+* Add feature to use Google dorks
+* Add more refined regexs for more accurate results
+* Add output to CSV 
+* Add ASCII art because it's fun
+* Add setup.py because doing installs suck
+* Add option for multi threaded process
+* Update help menu
+
+
+
+
 # Disclaimer
-This script was designed to be used for ethical hacking and educational purposes only
+This script was designed to be used for ethical and educational purposes only
