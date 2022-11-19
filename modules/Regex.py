@@ -5,12 +5,35 @@ class Regex:
 	
 	# Uses regular expressions to search for phone numbers 
 	def phone_number(html_content):
-		phone_number_regexs = ["[0-9]-[0-9]-[0-9]{7,14}", "[0-9]{2}-[0-9]{3}-[0-9]{4}", "[0-9]{4} [0-9]{3} [0-9]{3}", "[0-9]{3} [0-9]{3} [0-9]{4}", "\([0-9]{3}\) [0-9]{3} [0-9]{4}", "\+[0-9]{2} [0-9]{3} [0-9]{3} [0-9]{3}", "\+[0-9]{1} [0-9]{3} [0-9]{3} [0-9]{4}", "\+[0-9]{1}-[0-9]{3}-[0-9]{3}-[0-9]{4}", ]
+		phone_number_regexs = [
+		  	"[0-9]{4} [0-9]{3} [0-9]{3}",
+			"[0-9]{4}-[0-9]{3}-[0-9]{3}",
+		   	"[0-9]{3} [0-9]{3} [0-9]{4}",
+			"[0-9]{3}-[0-9]{3}-[0-9]{4}",
+			"\+[0-9]{2} [0-9]{2} [0-9]{3} [0-9]{3}",
+			"\+[0-9]{2}-[0-9]{2}-[0-9]{3}-[0-9]{3}",
+			"[0-9]{2} [0-9]{2} [0-9]{3} [0-9]{3}",
+			"[0-9]{2}-[0-9]{2}-[0-9]{3}-[0-9]{3}",
+		    	"\([0-9]{3}\) [0-9]{3} [0-9]{4}",
+			"\+[0-9]{2} [0-9]{3} [0-9]{3} [0-9]{3}", 
+			"\+[0-9]{2}-[0-9]{3}-[0-9]{3}-[0-9]{3}",
+			"\+[0-9]{1} [0-9]{3} [0-9]{3} [0-9]{4}", 
+			"\+[0-9]{1}-[0-9]{3}-[0-9]{3}-[0-9]{4}", 
+			"\+[0-9]{2} [0-9]{4} [0-9]{3} [0-9]{3}",
+			"\+[0-9]{2}-[0-9]{4}-[0-9]{3}-[0-9]{3}"
+			]
+
 		phone_numbers = set()
 		# Iterating throught phone_number_regexs and checking for any matches in the given html and adding all found matches to the set
 		for regex in phone_number_regexs:
 			for re_match in re.finditer(regex, str(html_content)):
-				phone_numbers.add(re_match.group())
+				ADD = True
+				for number in phone_numbers:
+					if re_match.group() in str(number):
+						ADD = False
+				
+				if ADD:	
+					phone_numbers.add(re_match.group())
 
 		return phone_numbers
 
@@ -147,3 +170,12 @@ class Regex:
 
 		return hashes
 
+	# Use user given regular expressions to find pattern matches
+	def custom_regex(html_content, custom_regexs):
+		custom_matches = set()
+		# Iterating throught custom_regexs and checking for any matches in the given html and adding all found matches to the set
+		for regex in custom_regexs:
+			for re_match in re.finditer(regex, str(html_content)):
+				custom_matches.add(re_match.group())
+
+		return custom_matches
