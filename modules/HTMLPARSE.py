@@ -24,7 +24,10 @@ class Parser:
 
 	# Uses regex to find all the href links in given HTML
 	def get_links(html_content, base_url, unscraped_url, scraped_url):
-		html_content = BeautifulSoup(html_content, "lxml")
+		try:
+			html_content = BeautifulSoup(html_content, "lxml")
+		except TypeError:
+			return unscraped_url
 		for _ in html_content:
 			link_regex = ['href="https://.*?"','href="/.*?"','href="http://.*?"']
 			for regex in link_regex:
