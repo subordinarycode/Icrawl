@@ -5,3 +5,4 @@ lxml==4.9.1
 beautifulsoup4==4.11.1
 ipinfo==4.4.0
 whois==0.8
+tqdm==4.64.1
