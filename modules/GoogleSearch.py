@@ -10,7 +10,7 @@ import lxml
 import logging 
 from colorama import Fore
 
-ROOT_LOGGER = logging.getLogger("googlesearch")
+ROOT_LOGGER = logging.getLogger("Icrawl")
 #logging.basicConfig(filename="Icrawl.log", level=5)
 
 # Colors
