@@ -71,7 +71,7 @@ To Do
 * Add more refined regexs for more accurate results
 * Add output to CSV 
 * Add setup.py because doing installs suck
-* Add a way to scrape social media sites i.e., Twitter, Facebook
+* Add a way to scrape social media sites i.e., Twitter
 * Add an option to turn logging on/off
 * Add way to use a proxie with normal searches
 
