@@ -45,7 +45,7 @@ def dork_stats(num_of_links, payload, returned_links, num, timeout, Proxy, quear
 	print(f"{ibox} Current dork                        : {queary}")
 
 
-# Read proxys.txt file and add all proxys in the file to a list		
+# Read proxies.txt file and add all proxies in the file to a list		
 def get_proxy_list():
 	proxys = []
 	file_path = __file__
@@ -61,32 +61,6 @@ def get_proxy_list():
 	return proxys
 
 
-# Takes a list of proxys and a list of used proxys
-# checks if the proxy has been used before
-# If all proxys have been used clear the used proxy list 
-# Add new proxy to used proxys list
-# Returns a random proxy from the list of proxys
-def get_proxy(used_proxys, list_of_proxys):
-	if len(list_of_proxys) != 0:
-		if len(used_proxys) == len(list_of_proxys):
-			ROOT_LOGGER.info(f"Clearing used proxys")
-			used_proxys.clear()
-
-		while True:
-			Proxy = choice(list_of_proxys)
-			if Proxy not in used_proxys:
-				used_proxys.append(Proxy)
-				ROOT_LOGGER.info(f"Proxy set as : {Proxy}")
-				break
-			ROOT_LOGGER.error(f"Proxy has already been used trying again  PROXY : {Proxy}")
-	else:
-		ROOT_LOGGER.error(f"No proxy has been set")
-		Proxy = ""
-		
-	return Proxy
-
-
-
 # Main
 # Loops through a list of google dorks and sends the dorks as google searches
 # Grabs a new proxy with every new google dork
@@ -96,7 +70,7 @@ def run_search(payload, num_of_links=5, timeout=30):
 	num = 0
 	returned_links = set()
 	list_of_proxys = get_proxy_list()
-	used_proxys = []
+
 
 	print(f"{ibox} Starting google dork search")
 	print(f"{ibox} Press CTRL-C to stop the search")
@@ -106,25 +80,28 @@ def run_search(payload, num_of_links=5, timeout=30):
 		timeout_between_requests=timeout,
 		timeout_between_new_page=timeout,
 	)		
+	
+
+	# Grabbing a proxie if there are proxies in the list
+	if len(list_of_proxys) != 0:
+		Proxy = list_of_proxys[0]
+	else:
+		Proxy = ""
+
 	client.get_user_agent()
 
+	# looping through the list of google dorks and sending a request with every new dork
 	for queary in payload:
 		ROOT_LOGGER.info(f"Current google dork : {queary}")
 
-		if len(list_of_proxys) != 0:
-			Proxy = get_proxy(used_proxys, list_of_proxys)
-			client.get_user_agent()
-		else:
-			Proxy = ""
 
 		client.proxy = Proxy
 		client.queary = queary
 		client.num_of_links_to_return = num_of_links
 		dork_stats(num_of_links, payload, returned_links, num, timeout, Proxy, queary)		
 		new_links = client.start_google_connection()
-		used_proxys.append(Proxy)
-		try:
-			
+
+		try:			
 			for i in new_links:
 				returned_links.add(i)
 		except TypeError:
@@ -133,15 +110,20 @@ def run_search(payload, num_of_links=5, timeout=30):
 		if "Blocked ip" in returned_links:
 			
 			if len(list_of_proxys) > 1:
-				print(f"\n{error} Oops it looks like your IP has been blocked by google")
-				ROOT_LOGGER.error(f"Proxy has been burned : {Proxy}")
-				print(f"{ibox} Romoving burned proxy from proxy list")
+				print(f"\n{error} Oops it looks like the current proxie has been blocked by google : {Proxy}")
+				ROOT_LOGGER.error(f"Proxie has been burned : {Proxy}")
+				print(f"{ibox} Romoving burned proxie from proxie list")
 				list_of_proxys.remove(Proxy)
-				ROOT_LOGGER.info(f"Removing burned proxy from proxy list PROXY : {Proxy}")
+				ROOT_LOGGER.info(f"Removing burned proxie from proxie list PROXIE : {Proxy}")
+				print(f"{ibox} Grabbing new proxie")
+				Proxy = list_of_proxys[0]
+				client.get_user_agent()
+				print(f"{ibox} New proxie : {Proxy}")
+
 
 			else:
-				print(f"{error} No other proxys to use returning current resaults")
-				ROOT_LOGGER.error(f"No other proxys to use returning current resaults")
+				print(f"{error} No other proxies to use returning current resaults")
+				ROOT_LOGGER.error(f"No other proxies to use returning current resaults")
 				break
 
 		if queary == payload[-1]:
