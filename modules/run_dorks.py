@@ -49,7 +49,7 @@ def dork_stats(num_of_links, payload, returned_links, num, timeout, Proxy, quear
 def get_proxy_list():
 	proxys = []
 	file_path = __file__
-	proxy_path = file_path.replace("run_dorks.py", "proxys.txt")
+	proxy_path = file_path.replace("run_dorks.py", "proxies.txt")
 
 	with open(proxy_path, "r") as f:
 		content = f.readlines()
