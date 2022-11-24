@@ -58,11 +58,11 @@ all the latest google dorks and saves them in the modules/dorks directory.
 
 Acknowledgments
 ---
-While I didn't just copy and paste. Whenever i'd run into a problem while writing the googlesearch.py file I
-would go to https://github.com/opsdisk/yagooglesearch as they have some good documentation for that project 
-and the comments in the code made it really easy to understand what was going on. 
+While I didn't just copy and paste. Whenever i'd run into a problem while writing the googlesearch.py file and the
+update_dorks file I would go to https://github.com/opsdisk/ as they have some good documentation for there projects 
+and the comments in there code make it really easy to understand what is going on. 
 
-They have done an awesome job on this project, and I would recommend that you give it a look over
+They have some awesome projects and i would recommend you give it a look over.
 
 
 
