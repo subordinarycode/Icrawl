@@ -24,7 +24,7 @@ def update_google_dorks():
 		print(f"[+] Sending requests to : {url[0]}")
 		ROOT_LOGGER.info(f"Sending request to URL : {url}")
 		for req in tqdm(url):			
-			response = requests.get(req, headers=headers, timeout=10)
+			response = requests.get(req, headers=headers)
 	
 	except:
 		ROOT_LOGGER.error(f"Request failed URL : {req}")
@@ -36,11 +36,12 @@ def update_google_dorks():
 		return None
 
 	
-	JSON = response.json()
+	
+	Json = response.json()
 
     # Getting the number of dorks and the google dork
-	num_of_dorks = JSON["recordsTotal"]
-	dorks = JSON["data"]
+	num_of_dorks = Json["recordsTotal"]
+	dorks = Json["data"]
 
     # List to track found dorks 
 	found_dorks = []
