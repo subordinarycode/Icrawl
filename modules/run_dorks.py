@@ -119,11 +119,12 @@ def run_search(payload, num_of_links=5, timeout=30):
 				Proxy = list_of_proxys[0]
 				client.get_user_agent()
 				print(f"{ibox} New proxie : {Proxy}")
-
+				returned_links.remove("Blocked ip")
 
 			else:
 				print(f"{error} No other proxies to use returning current resaults")
 				ROOT_LOGGER.error(f"No other proxies to use returning current resaults")
+				returned_links.remove("Blocked ip")
 				break
 
 		if queary == payload[-1]:
