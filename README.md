@@ -55,18 +55,6 @@ all the latest google dorks and saves them in the modules/dorks directory.
 
 
 
-
-Acknowledgments
----
-While I didn't just copy and paste. Whenever i'd run into a problem while writing the googlesearch.py file and the
-update_dorks file I would go to https://github.com/opsdisk/ as they have some good documentation for there projects 
-and the comments in there code make it really easy to understand what is going on. 
-
-They have some awesome projects and i would recommend you give it a look over.
-
-
-
-
 Notes
 ---
 To perform an IP Address geolocation, lookup a API key is required
@@ -78,7 +66,6 @@ Captcha. The longer the delay between requests, the less likely you are to come 
 Captcha
 
 
-
 To Do
 ---
 * Add more refined regexs for more accurate results
@@ -88,6 +75,14 @@ To Do
 * Add an option to turn logging on/off
 * Add way to use a proxie with normal searches
 
+
+Acknowledgments
+---
+While I didn't just copy and paste. Whenever i'd run into a problem while writing the googlesearch.py file and the
+update_dorks file I would go to https://github.com/opsdisk/ as they have some good documentation for there projects 
+and the comments in there code make it really easy to understand what is going on. 
+
+They have some awesome projects and i would recommend you give it a look over.
 
 
 Disclaimer
