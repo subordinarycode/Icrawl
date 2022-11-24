@@ -31,7 +31,7 @@ Usage
     python3 Icrawl -u <url> -A -c 10
 
 
-Proxy info
+Proxie info
 ---
 To use a list of proxies with Icrawl add your list of proxies to the modules/proxys.txt file.
 At run time, Icrawl will read the file and load all the proxies from the file into a list 
@@ -41,7 +41,7 @@ If during run time a proxy returns a 429 status code, the proxy is considered bu
 removed from the list of proxies. Icrawl will return all the results found before the 429 status
 code was given. Then grab a new proxy from the list and continue.
 
-Proxy format example: socks5://127.0.0.1:9050
+Proxie format example: socks5://127.0.0.1:9050
 
 
 Google dork info
