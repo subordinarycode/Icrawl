@@ -41,6 +41,8 @@ code was given. Then grab a new proxie from the list and continue.
 
 Proxie format example: socks5://127.0.0.1:9050
 
+Note at the moment Icrawl only uses a proxie while doing google dorks but this is something I am working on fixing.
+
 
 Google dork info
 ---
@@ -84,6 +86,7 @@ To Do
 * Add setup.py because doing installs suck
 * Add a way to scrape social media sites i.e., Twitter, Facebook
 * Add an option to turn logging on/off
+* Add way to use a proxie with normal searches
 
 
 
