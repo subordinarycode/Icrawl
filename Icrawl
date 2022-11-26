@@ -4,6 +4,7 @@ import argparse
 import logging 
 from colorama import Fore
 from socket import gethostbyname
+from urllib.parse import urlsplit
 
 
 # custom modules
@@ -13,12 +14,11 @@ from modules import run_dorks
 from modules.LookUp import Lookup
 from modules import dork_payload
 from modules import banners
+from modules.shodan import shodan_lookup
 
 
 
 ROOT_LOGGER = logging.getLogger("Icrawl")
-logging.basicConfig(filename="Icrawl.log", level=5, format="[%(levelname)s] [%(asctime)s] [%(filename)s] %(message)s")
-
 
 # Colors
 green = Fore.GREEN
@@ -30,12 +30,11 @@ cyan = Fore.CYAN
 
 # Boxes
 fbox = f"{green}[+]{norm}"
-box = f"[+]"
 ibox = f"{yellow}[+]{norm}"
 error = f"{red}[!]{norm}"
 
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 
 
@@ -49,33 +48,39 @@ python3 Icrawl -u <url> -A -r [0-9]{3}-[0-9]{3}-[0-9]{4} -v
 python3 Icrawl -u <url> --regex ^\(\d{3}\)\s\d{3}-\d{4} --count 10"""
 	
 	parser = argparse.ArgumentParser(description=f"Information Crawler\t (Version : {__version__})\nAn osint web scraping and google dork tool", epilog=examples,formatter_class=argparse.RawDescriptionHelpFormatter)
-	parser.add_argument("-A", "--all",     action="store_true",  help="Search for everything",               dest="all")
-	parser.add_argument("-a", "--address", action="store_true",  help="Search for street addresses (Note: returns false positives)", dest="address")
-	parser.add_argument("-ac", "--access", action="store_true",  help="Search for access tokens",            dest="access")
-	parser.add_argument("-au", "--auth",   action="store_true",  help="Search for authentication tokens",    dest="auth")	
-	parser.add_argument("-c", "--count",   metavar="" ,type=int, default=100 ,help="Maximum number of urls to scrape (Default 100)", dest="count")
-	parser.add_argument('-d', '--dorks',   action="store_true", help="Run google searches using google dorks", dest="dorks")
-	parser.add_argument("-e", "--emails",  action="store_true",  help="Search for emails addresses",         dest="emails")
-	parser.add_argument("-H", "--hash",    action="store_true",  help="Search for password hashes",          dest="hash")
-	parser.add_argument("-k", "--key",     action="store_true",  help="Search for api keys",                 dest="api")
-	parser.add_argument("-l", "--lookup",  action="store_true",  help="Proform whois lookup and iplocation", dest="lookup")
-	parser.add_argument("-o", "--output",  metavar="",type=str,  default="",   help="Save output to a file", dest="output")
-	parser.add_argument("-p", "--phone",   action="store_true",  help="Search for phone numbers",            dest="phone")
-	parser.add_argument("-r", "--regex",   metavar="",default=[],nargs='+',help="Use custom regular expressions",   dest="reg")
-	parser.add_argument("-s", "--secrets", action="store_true",  help="Search for API keys, Hashes, Access tokens Authentication tokens", dest="secrets")
-	parser.add_argument('-u', '--url', metavar="",type=str, default="", help="Url to start scraping/spidering", dest="url")
-	parser.add_argument('-U', '--update', action="store_true",  help="Download the latest google dorks", dest="update")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output", dest="verbose")
+	parser.add_argument("-A", "--all",     action="store_true",  help="Search for everything",                                                    dest="all")
+	parser.add_argument("-a", "--address", action="store_true",  help="Search for street addresses (Note: returns false positives)",              dest="address")
+	parser.add_argument("-ac", "--access", action="store_true",  help="Search for access tokens",                                                 dest="access")
+	parser.add_argument("-au", "--auth",   action="store_true",  help="Search for authentication tokens",                                         dest="auth")	
+	parser.add_argument("-c", "--count",   type=int,             help="Maximum number of urls to scrape (Default 100)", metavar="", default=100,  dest="count")
+	parser.add_argument('-d', '--dorks',   action="store_true",  help="Run google searches using google dorks",                                   dest="dorks")
+	parser.add_argument("-D", "--debug",   action="store_true",  help="Turn on logging",                                                          dest="log")
+	parser.add_argument("-e", "--emails",  action="store_true",  help="Search for emails addresses",                                              dest="emails")
+	parser.add_argument("-H", "--hash",    action="store_true",  help="Search for password hashes",                                               dest="hash")
+	parser.add_argument("-i", "--ip",      action="store_true",  help="Proform an IP geolocation lookup",                                         dest="geo")
+	parser.add_argument("-k", "--key",     action="store_true",  help="Search for api keys",                                                      dest="api")
+	parser.add_argument("-o", "--output",  type=str,             help="Save output to a file",                         metavar="",  default="",   dest="output")
+	parser.add_argument("-p", "--phone",   action="store_true",  help="Search for phone numbers",                                                 dest="phone")
+	parser.add_argument("-r", "--regex",   default=[],           help="Use custom regular expressions",      nargs='+', metavar="",               dest="reg")
+	parser.add_argument("-s", "--secrets", action="store_true",  help="Search for API keys, Hashes, Access tokens Authentication tokens",         dest="secrets")
+	parser.add_argument("-S", "--shodan",  action="store_true",  help="Profrom a shodan lookup for the IP of the url",                            dest="shodan")
+	parser.add_argument('-u', '--url',     type=str,             help="Url to start scraping/spidering",              metavar="",  default="",    dest="url")
+	parser.add_argument('-U', '--update',  action="store_true",  help="Download the latest google dorks",                                         dest="update")
+	parser.add_argument("-v", "--verbose", action="store_true",  help="Verbose output",                                                           dest="verbose")
+	parser.add_argument("-V", "--version", action="store_true",  help="Display the current version",                                              dest="version")
+	parser.add_argument("-w", "--whois", action="store_true",    help="Proform a whois lookup",                                                   dest="whois")
 	args = parser.parse_args()
 	
+	if args.version:
+		print(f"Icrawl : {__version__}")
+		exit()
+
 	if args.url == "" and args.dorks == False and args.update == False:
 		parser.print_usage()
 		exit()
 
-
 	if args.dorks and args.update:
 		parser.error("Can not run google dorks search and update at the same time")
-
 
 	# Making sure user input for custom regexs are all valid regexs before moving on
 	if args.reg != []:
@@ -91,7 +96,18 @@ python3 Icrawl -u <url> --regex ^\(\d{3}\)\s\d{3}-\d{4} --count 10"""
 
 # Print resaults from searches
 def resaults(dframes, scraped_url):
-	
+
+	# Print the resaults from the shodan lookup 
+	if args.shodan or args.all:
+		if len(general_info) > 0:
+			for info in general_info:
+				print(f"{fbox} {info} : {general_info[info]}")
+
+		if len(port_info) > 0:
+			for port in port_info:
+				print(f"{fbox} {port}")
+				print(port_info[port])
+
 	# Print urls and dataframes containing information scraped from that url
 	if len(dframes) == 0:
 		print(f"{error} No resaults found")
@@ -109,22 +125,24 @@ def resaults(dframes, scraped_url):
 						f.write(f"{blue}{key}{norm}\n")
 						f.write(f"{i[key]}\n\n")
 
-	# Print resaults from whois lookup
-	if len(domain_infomation) > 0:
-		for i in domain_infomation:
-			print(i)
-			if args.output != "":
-				with open(args.output, "a") as f:
-					f.write(i + "\n")
-	
-	# Print resaults from ip geolocation
-	if len(ip_info) > 0:
-		for key, value in ip_info:
-			print(f"{green}[+] {cyan}{key}{norm}: {value}")
-			if args.output != "":
-				with open(args.output, "a") as f:
-					f.write(f"{green}[+] {cyan}{key}{norm}: {value}\n")
-	
+	if args.lookup or args.all:
+		# Print resaults from whois lookup
+		if len(domain_infomation) > 0:
+			for i in domain_infomation:
+				print(i)
+				if args.output != "":
+					with open(args.output, "a") as f:
+						f.write(i + "\n")
+		
+		# Print resaults from ip geolocation
+		if len(ip_info) > 0:
+			for key, value in ip_info:
+				print(f"{green}[+] {cyan}{key}{norm}: {value}")
+				if args.output != "":
+					with open(args.output, "a") as f:
+						f.write(f"{green}[+] {cyan}{key}{norm}: {value}\n")
+
+							
 	# Take user input and print all scraped urls
 	if args.verbose:
 		answer = input(f"[+] Do you want to show all {len(scraped_url)} crawled urls?(Y/N): ")
@@ -139,7 +157,7 @@ def resaults(dframes, scraped_url):
 			for i in scraped_url:
 				f.write(f"{blue}{i}{norm}\n")
 
-# Ask user if they want to scrape googles search resaults
+# Asking the user if they want to scrape googles search resaults
 def google_dorks():
 
 	found_links = []
@@ -157,8 +175,8 @@ def google_dorks():
 			scraped_links = []
 			banner = banners.get_banner()
 			print(banner)
-			print(f"{box} Icrawl has started")
-			print(f"{box} Press CTRL-C to stop crawling")
+			print(f"{ibox} Icrawl has started")
+			print(f"{ibox} Press CTRL-C to stop crawling")
 			for link in found_links:
 				args.url = link
 				new_resaults, scraped_urls = run_crawler.crawler(args, False)
@@ -171,37 +189,48 @@ def google_dorks():
 			print()
 			for url in found_links:
 				print(url)
+				if args.output:
+					with open(args.output, "a") as f:
+						f.write(f"{fbox} {blue}{url}\n")
+						
 			print("Goodbye")
 			exit()
-
-# Get ip geolocation info and whois lookup info		
-def lookup():
-	base_url = args.url
-
-	if args.verbose:
-		print(f"{ibox} Running whois lookup")
-	domain_infomation = Lookup.domain_infomation(base_url)
-	url = base_url.split(".")
-	url = f"{url[1]}.{url[2]}"
-	if args.verbose:
-		print(f"{ibox} Running IP geolocation lookup")
-	domain_ip = gethostbyname(url)
-	ip_info = Lookup.ip_lookup(domain_ip)
-
-	return domain_infomation, ip_info
 
 
 
 if __name__ == '__main__':
 	args = parse_args()
 	
-	if args.lookup or args.all:
-		domain_infomation, ip_info = lookup()
-	else:
-		domain_infomation = []
-		ip_info = []
+	# Setting the logging level 
+	if args.log:
+		logging.basicConfig(filename="Icrawl.log", level=5, format="[%(levelname)s] [%(asctime)s] [%(filename)s] %(message)s")
 
+	# Running the who is lookup
+	if args.whois or args.all and not args.dorks and not args.update:
+		if args.verbose:
+			print(f"{ibox} Running whois lookup")
 	
+		domain_infomation = Lookup.domain_infomation(args.url)
+
+	# Running the IP geolocation lookup	
+	if args.geo or args.all and not args.dorks and not args.update:
+		parts = urlsplit(args.url)
+		url = f"{parts.netloc}"
+		
+		if args.verbose:
+			print(f"{ibox} Running IP geolocation lookup")
+	
+		domain_ip = gethostbyname(url)
+		ip_info = Lookup.ip_lookup(domain_ip)
+
+	# Running the shodan lookup
+	if args.shodan or args.all and not args.dorks and not args.update:
+		parts = urlsplit(args.url)
+		url = f"{parts.netloc}"
+		domain_ip = gethostbyname(args.url)
+		general_info, port_info = shodan_lookup(domain_ip)
+
+	# Running the dork update function			
 	if args.update:
 		downloaded_dorks = dork_update.update_google_dorks()
 		ROOT_LOGGER.info(f"Google dorks updated successfully {downloaded_dorks} where downloaded")
@@ -211,10 +240,13 @@ if __name__ == '__main__':
 		else:
 			print(f"\n[+] {downloaded_dorks} google dorks where successfully downloaded")
 	
+	# Running the google dorks scraper
 	elif args.dorks:
 		google_dorks()
 	
+	# Running the web crawler
 	else: 
+
 		banner = banners.get_banner()
 		print(banner)
 		print(f"{box} Icrawl has started")
