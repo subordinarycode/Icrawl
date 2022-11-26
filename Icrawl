@@ -8,15 +8,12 @@ from urllib.parse import urlsplit
 
 
 # custom modules
-from modules import dork_update
-from modules import run_crawler
-from modules import run_dorks
-from modules.LookUp import Lookup
-from modules import dork_payload
-from modules import banners
-from modules.shodan import shodan_lookup
-
-
+from modules.lookUp import ip_lookup, shodan_lookup, domain_infomation
+from modules.runCrawler import crawler
+from modules.updater import update_google_dorks
+from modules.banners import get_banner
+from modules.setPayload import get_payload
+from modules.runDorks import run_search
 
 ROOT_LOGGER = logging.getLogger("Icrawl")
 
@@ -77,10 +74,13 @@ python3 Icrawl -u <url> --regex ^\(\d{3}\)\s\d{3}-\d{4} --count 10"""
 
 	if args.url == "" and args.dorks == False and args.update == False:
 		parser.print_usage()
-		exit()
+		ROOT_LOGGER.critical("No run option was given")
+		exit(1)
 
 	if args.dorks and args.update:
+		ROOT_LOGGER.critical("Can not run google dorks search and update at the same time")
 		parser.error("Can not run google dorks search and update at the same time")
+
 
 	# Making sure user input for custom regexs are all valid regexs before moving on
 	if args.reg != []:
@@ -90,23 +90,32 @@ python3 Icrawl -u <url> --regex ^\(\d{3}\)\s\d{3}-\d{4} --count 10"""
 				compile(formated_reg)
 			except:
 				print(f"{error} Invalid regular expression {red}{reg}{norm}")
+				ROOT_LOGGER.critical(f"Invalid regular expression : {reg}")
 				exit(1)
 
+	ROOT_LOGGER.debug("User arguments parsed successfully")
 	return args
 
 # Print resaults from searches
 def resaults(dframes, scraped_url):
 
-	# Print the resaults from the shodan lookup 
+	# Print the resaults from the shodan lookup 	
 	if args.shodan or args.all:
 		if len(general_info) > 0:
 			for info in general_info:
 				print(f"{fbox} {info} : {general_info[info]}")
+				if args.output != "":
+					with open(args.output, "a") as f:
+						f.write(f"{fbox} {info} : {general_info[info]}\n")
 
 		if len(port_info) > 0:
 			for port in port_info:
 				print(f"{fbox} {port}")
 				print(port_info[port])
+				if args.output != "":
+					with open(args.output, "a") as f:
+						f.write(f"{fbox} {port}\n")
+						f.write(f"{port_info[port]}\n")
 
 	# Print urls and dataframes containing information scraped from that url
 	if len(dframes) == 0:
@@ -115,25 +124,25 @@ def resaults(dframes, scraped_url):
 			with open(args.output, "a") as f:
 				f.write(f"{error} No resaults found\n")
 	else:
-		num = 0
 		for i in dframes:
 			for key in i:
-				print(f"{blue}{key}{norm}")
+				print(f"{fbox} {blue}{key}{norm}")
 				print(i[key])
 				if args.output != "":
 					with open(args.output, "a") as f:
 						f.write(f"{blue}{key}{norm}\n")
 						f.write(f"{i[key]}\n\n")
 
-	if args.lookup or args.all:
+	if args.whois or args.all:
 		# Print resaults from whois lookup
-		if len(domain_infomation) > 0:
-			for i in domain_infomation:
+		if len(domain_info) > 0:
+			for i in domain_info:
 				print(i)
 				if args.output != "":
 					with open(args.output, "a") as f:
 						f.write(i + "\n")
-		
+	
+	if args.geo or args.all:	
 		# Print resaults from ip geolocation
 		if len(ip_info) > 0:
 			for key, value in ip_info:
@@ -141,45 +150,46 @@ def resaults(dframes, scraped_url):
 				if args.output != "":
 					with open(args.output, "a") as f:
 						f.write(f"{green}[+] {cyan}{key}{norm}: {value}\n")
-
 							
 	# Take user input and print all scraped urls
 	if args.verbose:
-		answer = input(f"[+] Do you want to show all {len(scraped_url)} crawled urls?(Y/N): ")
+		answer = input(f"{ibox} Do you want to show all {len(scraped_url)} crawled urls?(Y/N): ")
 		if answer.lower() == "y":
 			for i in scraped_url:
 				print(f"{blue}{i}{norm}")
-	
+				
 	# Writes scraped urls to a file
 	if args.output != "":
 		with open(args.output, "a") as f:
 			f.write("\n")
 			for i in scraped_url:
-				f.write(f"{blue}{i}{norm}\n")
+				f.write(f"{fbox} {blue}{i}{norm}\n")
 
 # Asking the user if they want to scrape googles search resaults
 def google_dorks():
-
+#payload = {"dorks" : list(list_of_dorks), "links" : num_of_links, "timeout":timeout}
 	found_links = []
-	dorks_to_use, number_of_links, timeout, = dork_payload.get_payload()
-	new_links = run_dorks.run_search(dorks_to_use, number_of_links, timeout)
-	found_links = found_links + new_links
+	payload = get_payload()
+	ROOT_LOGGER.debug("Payload for google dorks was set successfully")
+	found_links = run_search(payload=payload["dorks"], num_of_links=payload["links"], timeout=payload["timeout"])
+	ROOT_LOGGER.debug(f"Google dork search returned {len(found_links)} resaults")
+
 		
 	if len(found_links) != 0:
-		print(f"{error} Warning: Scraping google search resaults can be against googles terms of service")
-	
-		CONTINUE = input("[+] Do you want to continue?(Y/N): ")			
+		print(f"{error} Warning: Scraping google search resaults can be against googles terms of service")	
+		CONTINUE = input(f"{error} Do you want to continue?(Y/N): ")			
+
 		if CONTINUE.lower() == "y":
-			ROOT_LOGGER.info("Parsing found links from google dorks")
+			ROOT_LOGGER.debug(f"Parsing {len(found_links)} google search resaults")
 			regex_resaults = []
 			scraped_links = []
-			banner = banners.get_banner()
+			banner = get_banner()
 			print(banner)
 			print(f"{ibox} Icrawl has started")
 			print(f"{ibox} Press CTRL-C to stop crawling")
 			for link in found_links:
 				args.url = link
-				new_resaults, scraped_urls = run_crawler.crawler(args, False)
+				new_resaults, scraped_urls = crawler(args, spider=False)
 				regex_resaults = regex_resaults + new_resaults
 				scraped_links = scraped_links + scraped_urls
 				
@@ -188,7 +198,7 @@ def google_dorks():
 			ROOT_LOGGER.info(f"Printing found links from google dorks and quitting")
 			print()
 			for url in found_links:
-				print(url)
+				print(f"{fbox} {blue}{url}{norm}")
 				if args.output:
 					with open(args.output, "a") as f:
 						f.write(f"{fbox} {blue}{url}\n")
@@ -203,40 +213,42 @@ if __name__ == '__main__':
 	
 	# Setting the logging level 
 	if args.log:
-		logging.basicConfig(filename="Icrawl.log", level=5, format="[%(levelname)s] [%(asctime)s] [%(filename)s] %(message)s")
-
+		logging.basicConfig(filename="Icrawl.log", level=0, format="[%(levelname)s] [%(asctime)s] [%(filename)s] %(message)s")
+	else:
+		logging.basicConfig(filename="Icrawl.log", level=50, format="[%(levelname)s] [%(asctime)s] [%(filename)s] %(message)s")
+		
 	# Running the who is lookup
 	if args.whois or args.all and not args.dorks and not args.update:
-		if args.verbose:
-			print(f"{ibox} Running whois lookup")
+		print(f"{ibox} Running whois lookup")
 	
-		domain_infomation = Lookup.domain_infomation(args.url)
+		domain_info = domain_infomation(args.url)
 
 	# Running the IP geolocation lookup	
 	if args.geo or args.all and not args.dorks and not args.update:
 		parts = urlsplit(args.url)
 		url = f"{parts.netloc}"
 		
-		if args.verbose:
-			print(f"{ibox} Running IP geolocation lookup")
-	
+
+		print(f"{ibox} Running IP geolocation lookup")
+
 		domain_ip = gethostbyname(url)
-		ip_info = Lookup.ip_lookup(domain_ip)
+		ip_info = ip_lookup(domain_ip)
 
 	# Running the shodan lookup
 	if args.shodan or args.all and not args.dorks and not args.update:
+		print(f"{ibox} Running shodan lookup")
 		parts = urlsplit(args.url)
 		url = f"{parts.netloc}"
-		domain_ip = gethostbyname(args.url)
+		domain_ip = gethostbyname(url)
 		general_info, port_info = shodan_lookup(domain_ip)
 
 	# Running the dork update function			
 	if args.update:
-		downloaded_dorks = dork_update.update_google_dorks()
+		downloaded_dorks = update_google_dorks()
 		ROOT_LOGGER.info(f"Google dorks updated successfully {downloaded_dorks} where downloaded")
 		if downloaded_dorks == None:
 			downloaded_dorks = 0
-			print(f"[!] {downloaded_dorks} where downloaded please check your internet connection")
+			print(f"[!] {downloaded_dorks} google dorks where downloaded")
 		else:
 			print(f"\n[+] {downloaded_dorks} google dorks where successfully downloaded")
 	
@@ -247,11 +259,11 @@ if __name__ == '__main__':
 	# Running the web crawler
 	else: 
 
-		banner = banners.get_banner()
+		banner = get_banner()
 		print(banner)
-		print(f"{box} Icrawl has started")
-		print(f"{box} Press CTRL-C to stop crawling")
-		new_resaults, scraped_urls = run_crawler.crawler(args, True)
+		print(f"{ibox} Icrawl has started")
+		print(f"{ibox} Press CTRL-C to stop crawling")
+		new_resaults, scraped_urls = crawler(args, True)
 		resaults(new_resaults, scraped_urls)
 
 
