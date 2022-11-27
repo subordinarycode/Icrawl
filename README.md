@@ -23,6 +23,8 @@ Searches
 Installation
 ----
     
+    git clone https://github.com/subordinarycode/Icrawl
+    cd Icrawl
     python3 setup.py
     
     
