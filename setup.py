@@ -39,8 +39,12 @@ def main():
 	print("[+] Installing requirements")
 	print("[+] This may take a couple of seconds")
 	os.system("pip3 install -r requirements.txt")
-
-	print("[+] Setup complete\n[+] To update the list of google dorks run python3 Icrawl --update")
+	print("[+] Updating google dorks")
+	print("[+] This may take a couple of seconds")
+	os.system("python3 Icrawl --update")
+	print("[+] Setup complete")
+	print("Goodbye")
+	
 	
 
 
