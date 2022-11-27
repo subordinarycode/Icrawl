@@ -32,6 +32,7 @@ Usage
 ----
   
     python3 Icrawl -u <url> -A -c 10
+    python3 --dork --emails
 
 
 Proxy info
