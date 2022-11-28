@@ -11,16 +11,6 @@ ROOT_LOGGER = logging.getLogger("Icrawl")
 # Can be used to set Headers, User-agent and proxy
 # Sends the request with all options set 
 # returns the request as a beautiful soup object
-
-# Usage
-# x = sender()
-# x.get_user_agent()
-# x.get_headers()   
-# For dork update  
-# x.get_headers(update=True)
-# soup = x.get_request(<options>)
-
-
 class sender:
     def __init__(
             self,
