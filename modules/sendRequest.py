@@ -1,10 +1,12 @@
 #! /bin/env python3 
 
 import requests
+import os
 from bs4 import BeautifulSoup
 import lxml 
 import logging 
 from random import choice
+
 
 ROOT_LOGGER = logging.getLogger("Icrawl")
 
@@ -14,13 +16,13 @@ ROOT_LOGGER = logging.getLogger("Icrawl")
 class sender:
     def __init__(
             self,
-            url="", 
-            timeout=20, 
-            user_agent="", 
-            proxy="", 
+            url="",
+            timeout=20,
+            user_agent="",
+            proxy="",
             lang="en-US,en;q=0.5",
             tld="com",
-            safe="off", 
+            safe="off",
             tabs=0,
             update=False,
             cookie="",
@@ -32,7 +34,7 @@ class sender:
         self.timeout = timeout
         self.user_agent = user_agent
         self.proxy = proxy
-        self.lang = lang 
+        self.lang = lang
         self.tld = tld
         self.safe = safe
         self.tabs = tabs
@@ -51,7 +53,7 @@ class sender:
             if self.url == "":
                 ROOT_LOGGER.critical("No url was supplied")
                 return None
-            
+
             # Asigning the proxy
             if self.proxy != "":
                 self.proxy = {"http" : self.proxy,"https": self.proxy,}	
@@ -64,11 +66,11 @@ class sender:
                 responce = requests.get(
                         self.url,
                         headers=self.headers,
-                        cookies=self.cookie, 
+                        cookies=self.cookie,
                         proxies=self.proxy,
                         timeout=self.timeout
                     )
-                
+
             except TimeoutError:
                 return None
             except requests.ConnectionError:
@@ -76,14 +78,13 @@ class sender:
             except Exception as e:
                 print(e)
                 return None
-            
-            
+
+
             soup = BeautifulSoup(responce.text, "lxml")
             return soup
-        
+
     # Asigns the header for the request and adds it to self
     def get_headers(self):
-        
         self.headers = {
 			"Accept"          : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
 			"Accept-Encoding" : "gzip, deflate, br",
@@ -92,7 +93,7 @@ class sender:
 			"User-Agent"      : self.user_agent,
 		}
         # Trying to get a json format responce
-        if self.update:          
+        if self.update:
             self.headers = {
                 "Accept": "application/json, text/javascript, */*; q=0.01",
                 "Accept-Encoding": "gzip, deflate, br",
@@ -102,7 +103,7 @@ class sender:
             }
 
         # Trying to make the google request look like it come from the browser
-        if self.google:   						
+        if self.google:
             self.headers = {
 			"Accept"          : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
 			"Accept-Encoding" : "gzip, deflate, br",
@@ -117,9 +118,9 @@ class sender:
     # Read proxies.txt file and add all proxies in the file to a list		
     def get_proxy(self):
         proxies = []
-        file_path = __file__
+        file_path = os.path.abspath(__file__)
         proxy_path = file_path.replace("sendRequest.py", "proxies.txt")
-   
+
         try:
             with open(proxy_path, "r") as f:
                 content = f.readlines()
@@ -137,16 +138,16 @@ class sender:
             ROOT_LOGGER.debug("No proxys left in the proxy list")
             self.proxy = ""
 
-            
-        return self.proxy 
-   
+
+        return self.proxy
+
     # Grab a random user agent and add it to self
     def get_user_agent(self):
         try:
             # Getting the files full path
-            path = __file__
+            path = os.path.abspath(__file__)
             user_agent_path = path.replace("sendRequest.py", "user_agents.txt")
-         
+
             # Adding the content of the file to a list
             with open(user_agent_path) as f:
                 content = f.readlines()
@@ -158,19 +159,19 @@ class sender:
             # if the user agent came back empty try again
             if self.user_agent == "":
                 ROOT_LOGGER.debug(f"User agent come back empty trying again")
-                sender.get_user_agent(self)			
-            
+                sender.get_user_agent(self)
+
         except:
             ROOT_LOGGER.critical(f"Wasnt able to locate {user_agent_path}")
-            exit(1)		
-	
-        
+            exit(1)
+
+
         return self.user_agent
-    
+
     # Starts a request connection sends the request and parsed the request responce
     # If a cookie is found in the reponce the cookie is asigned to self for the next request
     def google_connection(self):
-		
+
 		# Making a request session
         connection = requests.session()
         connection.headers = self.headers
@@ -186,7 +187,7 @@ class sender:
             return "Timeout"
         except requests.ConnectionError:
             return "Connection error"
-        
+
 
         # Making sure the responce code was an okay responce and setting the cookie
         if responce.ok:
@@ -194,7 +195,7 @@ class sender:
             ROOT_LOGGER.debug(f"Status code {responce.status_code} URL : {self.url}")
             soup = BeautifulSoup(responce.text, "lxml")
             Cookie = responce.cookies.get_dict()
-  
+
             # Setting the cookie for the next request
             # If the cookie isnt set after each request 
             # The following request has a higher change of being blocked
@@ -208,7 +209,7 @@ class sender:
             else:
                 ROOT_LOGGER.debug("No cookie was found cooke has not been set")
 
-            return soup        
+            return soup
         # If responce = a 429 status code we are being blocked by a captcha
         elif responce.status_code == 429:
             ROOT_LOGGER.error(f"Looks like google is blocking Icawl with a captcha")
@@ -217,9 +218,4 @@ class sender:
         else:
             ROOT_LOGGER.error(f"Status code error Staus Code : {responce.status_code}")
             return responce.status_code
-        
-
-
-
-
 
