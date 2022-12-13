@@ -85,7 +85,7 @@ def update_google_dorks():
 	for key, value in tqdm(sorted_dorks.items()):
 
 		dork_file = value["category_name"].lower().replace(" ", "_")
-		path = os.path.abspth(__file__)	
+		path = os.path.abspath(__file__)	
 		dork_path = path.replace("updater.py", f"dorks/{dork_file}.dorks")
            
 
