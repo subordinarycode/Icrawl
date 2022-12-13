@@ -26,9 +26,9 @@ error = f"{red}[!]{norm}"
 
 def get_google_dorks():
 	try:
-		path = __file__
-		dorks_path = path.replace("setPayload.py", "dorks")
-		dork_files = os.listdir(dorks_path)
+		path = os. path. abspath(__file__)
+		dork_path = path.replace("setPayload.py", "dorks/")
+		dork_files = os.listdir(dork_path)
 			
 		sorted_files =	{}
 		formatted_strings = []
@@ -37,6 +37,9 @@ def get_google_dorks():
 		num1 = 0
 		num2 = 1
 		max_string_length = 45
+		
+		if (len(dork_files) % 2) != 0:
+			dork_files.append(" ")
 
 		# Making a dict of files and there index number  key=number value=filename
 		for file in dork_files:
@@ -50,14 +53,19 @@ def get_google_dorks():
 			string = f"[{num1}] {v}"
 			string_length  = len(string)
 			space = max_string_length - string_length
-			string = f"{yellow}[{norm}{num1}{yellow}]{cyan} {v.replace('_', ' ')}{spaces*space}{yellow}[{norm}{num2}{yellow}]{cyan} {w.replace('_', ' ')}{norm}"
+			
+			if w == " ":
+				string = f"{yellow}[{norm}{num1}{yellow}]{cyan} {v.replace('_', ' ')}"
+			else:
+				string = f"{yellow}[{norm}{num1}{yellow}]{cyan} {v.replace('_', ' ')}{spaces*space}{yellow}[{norm}{num2}{yellow}]{cyan} {w.replace('_', ' ')}{norm}"
+		
 			num1 += 2
 			num2 += 2
 			formatted_strings.append(string)
 	
 	except Exception as e:
 		ROOT_LOGGER.error(f"Get dorks failed because {e}")
-		
+		exit()
 	return formatted_strings, sorted_files
 	
 # Clears the screan based on the operating system
@@ -104,7 +112,8 @@ def get_payload():
 			break
 
 		# Getting the dork files full path
-		dorks_path = os.path.abspath("modules/dorks/" + dork_dict[int(dork_search)])
+		path = os. path. abspath(__file__)
+		dorks_path = path.replace("setPayload.py", f"dorks/{dork_dict[int(dork_search)]}")
 		ROOT_LOGGER.debug(f"Dork file full path : {dorks_path}")
 
 		# Reading the dork file and adding content to a list
