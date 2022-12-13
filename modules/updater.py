@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm 
 import lxml
+import os
 
 
 
@@ -84,7 +85,9 @@ def update_google_dorks():
 	for key, value in tqdm(sorted_dorks.items()):
 
 		dork_file = value["category_name"].lower().replace(" ", "_")
-		dork_path = f"modules/dorks/{dork_file}.dorks"
+	        path = os.path.abspth(__file__)	
+                dork_path = path.replace("updater.py", f"dorks/{dork_file}.dorks")
+           
 
 
 		with open(dork_path, "w", encoding="utf-8") as f:
