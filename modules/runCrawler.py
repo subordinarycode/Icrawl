@@ -6,7 +6,7 @@ import pandas
 from colorama import Fore
 import logging 
 from modules.sendRequest import sender
-from modules.htmlParser import  Parser      # <~~ theres gonna be a problem here 
+from modules.htmlParser import  Parser      
 
 
 ROOT_LOGGER = logging.getLogger("Icrawl")
