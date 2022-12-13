@@ -19,7 +19,7 @@ def make_dataframe(frame_name, emails,phone_numbers, addresses,  auth_tokens,  a
 	dframes = {}
 	df = pandas.DataFrame()
 
-		# Emails
+	# Emails
 	if len(emails) != 0:
 		df["Emails"] = pandas.Series(list(emails))
 		ROOT_LOGGER.debug(f"Adding {len(emails)} possible emails to datafame")
@@ -83,20 +83,20 @@ def crawler(args, spider):
     green = Fore.GREEN
     norm = Fore.RESET
 
-	# Boxes
+    # Boxes
     ibox = f"{yellow}[+]{norm}"
     fbox = f"{green}[+]{norm}"
     error = f"{red}[!]{norm}"
     returned_resaults = []
 
-	# Breaking up the given url into 3 parts scheme=https:// netloc=domainName path=subDirectorys
+    # Breaking up the given url into 3 parts scheme=https:// netloc=domainName path=subDirectorys
     unscraped_url = deque([args.url])
     parts = urlsplit(args.url)
     base_url = f"{parts.scheme}://{parts.netloc}"
     ROOT_LOGGER.debug(f"crawler has started")
     ROOT_LOGGER.debug(f"Base url URL : {base_url}")
 
-	# Run the loop until all urls are scraped or until max count is reached
+    # Run the loop until all urls are scraped or until max count is reached
     try:
         while len(unscraped_url) and len(scraped_url) <= args.count -1:
             dframes = {}
