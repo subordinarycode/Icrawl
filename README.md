@@ -86,16 +86,6 @@ and the comments in there code make it really easy to understand what is going o
 They have some awesome projects and i would recommend you give it a look over.
 
 
-Known bugs
----
-There is a bug when adding a custom goole dork file to the modules/dorks directory
-because Icrawl reads and displays these files two files at a time unless you add two new files 
-there is a chance the file you added wont be displayed in the payload setup.
-
-This is something I am actively looking for a solution to but for the meantime if you add a new custom dork file 
-to to modules./dorks directory and it doesnt appear in the payload setup just add an extra blank file to the modules/dorks directory
-and everything should show up when setting up the paylaod
-
 Disclaimer
 ---
 This script was designed to be used for ethical and educational purposes only
