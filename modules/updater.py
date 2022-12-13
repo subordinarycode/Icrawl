@@ -85,8 +85,8 @@ def update_google_dorks():
 	for key, value in tqdm(sorted_dorks.items()):
 
 		dork_file = value["category_name"].lower().replace(" ", "_")
-	        path = os.path.abspth(__file__)	
-                dork_path = path.replace("updater.py", f"dorks/{dork_file}.dorks")
+		path = os.path.abspth(__file__)	
+		dork_path = path.replace("updater.py", f"dorks/{dork_file}.dorks")
            
 
 
@@ -98,6 +98,3 @@ def update_google_dorks():
 
 
 	return num_of_dorks
-
-
-
