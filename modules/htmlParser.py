@@ -258,7 +258,7 @@ class Parser:
                 resaults["links"] = list(found_links)
 
             else:
-                for tag in self.html_content.find_all("a"):
+                for tag in self.html_content.find_all("a", href=True):
                     if self.base_url in tag["href"] and tag["href"] not in self.scraped and tag["href"] not in self.unscraped:
                         self.unscraped.append(tag["href"])
 
