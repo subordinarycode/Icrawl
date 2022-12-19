@@ -119,7 +119,7 @@ def shodan_lookup(ip,):
     request = sender()
     request.get_user_agent()
     request.get_headers()
-    request.get_proxy
+    request.get_proxy()
     request.url = url
     soup = request.get_request()
     if soup == None:
